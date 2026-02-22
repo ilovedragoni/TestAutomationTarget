@@ -1,0 +1,17 @@
+# Test profile: in-memory H2 — no external DB required
+spring:
+  datasource:
+    url: jdbc:h2:mem:targettest;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=TRUE
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    database-platform: org.hibernate.dialect.H2Dialect
+  flyway:
+    enabled: false
+  batch:
+    jdbc:
+      initialize-schema: embedded
+
+seed:
+  enabled: false

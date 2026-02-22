@@ -1,0 +1,37 @@
+spring:
+  application:
+    name: TestAutomationTarget
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/targetdb
+    driver-class-name: org.postgresql.Driver
+    username: sa
+    password: secret
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
+  batch:
+    jdbc:
+      initialize-schema: always
+    job:
+      enabled: true
+
+
+server:
+  port: 8080
+
+# Seed data for performance testing (disable with seed.enabled: false)
+seed:
+  enabled: true
+  count: 1000
