@@ -2,12 +2,13 @@ import { Link } from 'react-router-dom';
 
 import { useAppDispatch, useAppSelector } from '../app/hooks';
 import {
-  clearCart,
-  decrementQuantity,
-  removeFromCart,
+  addToCartServer,
+  clearCartServer,
+  decrementQuantityServer,
+  removeFromCartServer,
   selectCartItems,
   selectCartSubtotal,
-  addToCart,
+  selectCartSyncing,
 } from '../slices/cartSlice';
 
 function formatPrice(amount: number): string {
@@ -19,8 +20,19 @@ function formatPrice(amount: number): string {
 
 export default function CartPage() {
   const dispatch = useAppDispatch();
+  const { isAuthenticated, checkingSession } = useAppSelector((state) => state.auth);
   const items = useAppSelector(selectCartItems);
   const subtotal = useAppSelector(selectCartSubtotal);
+  const syncing = useAppSelector(selectCartSyncing);
+
+  if (!checkingSession && !isAuthenticated) {
+    return (
+      <section className="cart-page" data-testid="cart-page">
+        <h1 id="cart-title">Shopping Cart</h1>
+        <p className="not-logged-in-text">You need to <Link to="/signin">sign in</Link> to add items to cart.</p>
+      </section>
+    );
+  }
 
   return (
     <section className="cart-page" data-testid="cart-page">
@@ -47,12 +59,23 @@ export default function CartPage() {
 
                 <div className="cart-item-controls">
                   <p className="cart-item-price">{formatPrice(item.product.price * item.quantity)}</p>
+                  <p className="cart-item-unit-price">Price per item: {formatPrice(item.product.price)}</p>
                   <div className="cart-qty-controls" aria-label={`Quantity controls for ${item.product.name}`}>
-                    <button type="button" id={`cart-minus-${item.product.id}`} onClick={() => dispatch(decrementQuantity(item.product.id))}>
+                    <button
+                      type="button"
+                      id={`cart-minus-${item.product.id}`}
+                      onClick={() => void dispatch(decrementQuantityServer(item.product.id))}
+                      disabled={syncing}
+                    >
                       -
                     </button>
                     <span id={`cart-qty-${item.product.id}`}>{item.quantity}</span>
-                    <button type="button" id={`cart-plus-${item.product.id}`} onClick={() => dispatch(addToCart(item.product))}>
+                    <button
+                      type="button"
+                      id={`cart-plus-${item.product.id}`}
+                      onClick={() => void dispatch(addToCartServer(item.product))}
+                      disabled={syncing}
+                    >
                       +
                     </button>
                   </div>
@@ -60,7 +83,8 @@ export default function CartPage() {
                     type="button"
                     id={`cart-remove-${item.product.id}`}
                     className="cart-remove"
-                    onClick={() => dispatch(removeFromCart(item.product.id))}
+                    onClick={() => void dispatch(removeFromCartServer(item.product.id))}
+                    disabled={syncing}
                   >
                     Remove
                   </button>
@@ -74,12 +98,12 @@ export default function CartPage() {
               Subtotal: <strong id="cart-subtotal">{formatPrice(subtotal)}</strong>
             </p>
             <div className="cart-summary-actions">
-              <button type="button" id="cart-clear" onClick={() => dispatch(clearCart())}>
+              <button type="button" id="cart-clear" onClick={() => void dispatch(clearCartServer())} disabled={syncing}>
                 Clear cart
               </button>
-              <button type="button" id="cart-checkout" disabled>
-                Checkout (Coming soon)
-              </button>
+              <Link to="/checkout" id="cart-checkout" className="cart-checkout-link">
+                Checkout
+              </Link>
             </div>
           </section>
         </>

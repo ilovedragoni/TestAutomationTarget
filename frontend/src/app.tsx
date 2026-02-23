@@ -10,6 +10,7 @@ import { store } from './app/store';
 import CartPage from './components/CartPage';
 import CartSync from './components/CartSync';
 import CategoryBar from './components/CategoryBar';
+import CheckoutPage from './components/CheckoutPage';
 import Contact from './components/Contact';
 import Home from './components/Home';
 import Profile from './components/Profile';
@@ -48,6 +49,7 @@ function AppContent() {
           <Route path="/" element={<Home />} />
           <Route path="/products" element={<ProductList />} />
           <Route path="/cart" element={<CartPage />} />
+          <Route path="/checkout" element={<CheckoutPage />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/signin" element={<SignIn />} />
           <Route path="/signup" element={<SignUp />} />

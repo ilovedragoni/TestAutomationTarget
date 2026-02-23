@@ -1,27 +1,30 @@
 import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
+import { Link } from 'react-router-dom';
 
 import { useAppDispatch, useAppSelector } from '../app/hooks';
 import LoadingSpinner from './LoadingSpinner';
-import { addToCart } from '../slices/cartSlice';
+import { addToCartServer } from '../slices/cartSlice';
 import {
   clearMessage,
   loadProducts,
+  setPage,
   setSearch,
 } from '../slices/productSlice';
 
 export default function ProductList() {
   const dispatch = useAppDispatch();
+  const { isAuthenticated, checkingSession } = useAppSelector((state) => state.auth);
 
-  const { items, search, categoryId, loading, error, message } = useAppSelector(
+  const { items, search, categoryId, page, size, totalPages, totalElements, loading, error, message } = useAppSelector(
     (state) => state.products,
   );
 
   const [searchInput, setSearchInput] = useState(search);
 
   useEffect(() => {
-    void dispatch(loadProducts({ search, categoryId }));
-  }, [dispatch, search, categoryId]);
+    void dispatch(loadProducts({ search, categoryId, page, size }));
+  }, [dispatch, search, categoryId, page, size]);
 
   useEffect(() => {
     setSearchInput(search);
@@ -50,6 +53,11 @@ export default function ProductList() {
       <p id="page-description">
         Target app for test automation. Use data-testid and ids for selectors.
       </p>
+      {!checkingSession && !isAuthenticated && (
+        <p className="not-logged-in-text">
+          You need to <Link to="/signin">sign in</Link> to add items to cart.
+        </p>
+      )}
 
       {message && (
         <div className="message success" id="flash-message" role="alert">
@@ -80,6 +88,31 @@ export default function ProductList() {
         </div>
       </form>
 
+      <div className="products-meta" id="products-meta">
+        <p>
+          Showing page <strong>{totalPages === 0 ? 0 : page + 1}</strong> of <strong>{totalPages}</strong> (
+          <strong>{totalElements}</strong> total items)
+        </p>
+        <div className="products-pagination" aria-label="Products pagination">
+          <button
+            type="button"
+            id="products-prev-page"
+            onClick={() => dispatch(setPage(page - 1))}
+            disabled={loading || page <= 0}
+          >
+            Previous
+          </button>
+          <button
+            type="button"
+            id="products-next-page"
+            onClick={() => dispatch(setPage(page + 1))}
+            disabled={loading || page + 1 >= totalPages}
+          >
+            Next
+          </button>
+        </div>
+      </div>
+
       {loading && (
         <div id="loading" className="loading-wrap" role="status" aria-live="polite">
           <LoadingSpinner size="lg" />
@@ -98,14 +131,16 @@ export default function ProductList() {
               {product.description?.trim() ? product.description : 'No description available.'}
             </p>
             <p className="product-category">Category: {product.category?.name ?? '--'}</p>
-            <button
-              type="button"
-              onClick={() => dispatch(addToCart(product))}
-              id={`buy-${product.id}`}
-              className="product-buy"
-            >
-              Add to cart
-            </button>
+            {isAuthenticated &&
+              <button
+                type="button"
+                onClick={() => void dispatch(addToCartServer(product))}
+                id={`buy-${product.id}`}
+                className="product-buy"
+              >
+                Add to cart
+              </button>
+            }
           </article>
         ))}
 

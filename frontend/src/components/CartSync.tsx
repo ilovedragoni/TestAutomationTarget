@@ -1,49 +1,38 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 
 import { useAppDispatch, useAppSelector } from '../app/hooks';
-import { hydrateCart, loadServerCart, selectCartItems, syncCartToServer } from '../slices/cartSlice';
-import { loadCartFromStorage, saveCartToStorage } from '../utils/cartStorage';
+import {
+  clearCart,
+  loadServerCart,
+  selectCartItems,
+} from '../slices/cartSlice';
 
 export default function CartSync() {
   const dispatch = useAppDispatch();
   const { isAuthenticated, checkingSession } = useAppSelector((state) => state.auth);
   const cartItems = useAppSelector(selectCartItems);
-  const skipNextCartSync = useRef(false);
-  const [isHydrated, setIsHydrated] = useState(false);
+  const serverCartInitialized = useRef(false);
 
   useEffect(() => {
-    dispatch(hydrateCart(loadCartFromStorage()));
-    setIsHydrated(true);
-  }, [dispatch]);
-
-  useEffect(() => {
-    if (!isHydrated) {
-      return;
-    }
-    saveCartToStorage(cartItems);
-  }, [cartItems, isHydrated]);
-
-  useEffect(() => {
-    if (!isAuthenticated || checkingSession) {
+    if (checkingSession) {
       return;
     }
 
-    skipNextCartSync.current = true;
+    if (!isAuthenticated) {
+      serverCartInitialized.current = false;
+      if (cartItems.length > 0) {
+        dispatch(clearCart());
+      }
+      return;
+    }
+
+    if (serverCartInitialized.current) {
+      return;
+    }
+
+    serverCartInitialized.current = true;
     void dispatch(loadServerCart());
-  }, [dispatch, isAuthenticated, checkingSession]);
-
-  useEffect(() => {
-    if (!isAuthenticated || checkingSession) {
-      return;
-    }
-
-    if (skipNextCartSync.current) {
-      skipNextCartSync.current = false;
-      return;
-    }
-
-    void dispatch(syncCartToServer(cartItems));
-  }, [dispatch, cartItems, isAuthenticated, checkingSession]);
+  }, [dispatch, isAuthenticated, checkingSession, cartItems.length]);
 
   return null;
 }

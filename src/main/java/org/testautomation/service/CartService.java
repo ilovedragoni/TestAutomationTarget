@@ -16,7 +16,6 @@ import org.testautomation.repository.UserCartItemRepository;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @Service
 public class CartService {
@@ -54,6 +53,7 @@ public class CartService {
         Map<Long, Product> products = loadProducts(quantitiesByProductId.keySet());
 
         userCartItemRepository.deleteByUserId(userAccount.getId());
+        userCartItemRepository.flush();
 
         List<UserCartItem> replacementItems = quantitiesByProductId.entrySet().stream()
                 .map((entry) -> {
@@ -65,33 +65,7 @@ public class CartService {
                 })
                 .toList();
 
-        userCartItemRepository.saveAll(replacementItems);
-        return getCart(email);
-    }
-
-    @Transactional
-    public CartResponse mergeCart(String email, List<CartItemRequest> payload) {
-        UserAccount userAccount = getUserByEmail(email);
-        Map<Long, Integer> quantitiesByProductId = normalize(payload);
-        Map<Long, Product> products = loadProducts(quantitiesByProductId.keySet());
-
-        Map<Long, UserCartItem> existingItemsByProductId = userCartItemRepository.findByUserId(userAccount.getId()).stream()
-                .collect(Collectors.toMap((item) -> item.getProduct().getId(), (item) -> item));
-
-        for (Map.Entry<Long, Integer> entry : quantitiesByProductId.entrySet()) {
-            UserCartItem existingItem = existingItemsByProductId.get(entry.getKey());
-            if (existingItem != null) {
-                existingItem.setQuantity(existingItem.getQuantity() + entry.getValue());
-                continue;
-            }
-
-            UserCartItem newItem = new UserCartItem();
-            newItem.setUser(userAccount);
-            newItem.setProduct(products.get(entry.getKey()));
-            newItem.setQuantity(entry.getValue());
-            userCartItemRepository.save(newItem);
-        }
-
+        userCartItemRepository.saveAllAndFlush(replacementItems);
         return getCart(email);
     }
 

@@ -1,8 +1,13 @@
-import type { Product } from "../types/product";
+import type { Product, ProductPage } from "../types/product";
 
 const API_BASE = '/api/products';
 
-export async function fetchProducts(search = '', categoryId: number | null): Promise<Product[]> {
+export async function fetchProducts(
+  search = '',
+  categoryId: number | null,
+  page = 0,
+  size = 12,
+): Promise<ProductPage> {
   const params = new URLSearchParams();
 
   if (search) {
@@ -12,6 +17,8 @@ export async function fetchProducts(search = '', categoryId: number | null): Pro
   if (categoryId) {
     params.set('categoryId', categoryId.toString());
   }
+  params.set('page', page.toString());
+  params.set('size', size.toString());
 
   const qs = params.toString();
   const url = qs ? `${API_BASE}?${qs}` : `${API_BASE}`;

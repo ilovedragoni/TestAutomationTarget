@@ -15,4 +15,14 @@ export interface Product {
 export interface ProductFilters {
   search?: string;
   categoryId?: number | null;
+  page?: number;
+  size?: number;
+}
+
+export interface ProductPage {
+  items: Product[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
 }

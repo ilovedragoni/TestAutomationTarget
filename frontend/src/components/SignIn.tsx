@@ -4,13 +4,11 @@ import { Link, Navigate } from 'react-router-dom';
 
 import { useAppDispatch, useAppSelector } from '../app/hooks';
 import { clearAuthFeedback, signIn } from '../slices/authSlice';
-import { mergeGuestCart, selectCartItems } from '../slices/cartSlice';
 import LoadingSpinner from './LoadingSpinner';
 
 export default function SignIn() {
   const dispatch = useAppDispatch();
   const { loading, error, message, isAuthenticated, user } = useAppSelector((state) => state.auth);
-  const cartItems = useAppSelector(selectCartItems);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -38,12 +36,8 @@ export default function SignIn() {
           rememberMe,
         }),
       ).unwrap();
-
-      if (cartItems.length > 0) {
-        await dispatch(mergeGuestCart(cartItems)).unwrap();
-      }
     } catch {
-      // Auth and cart merge errors are surfaced by their slices.
+      // Auth errors are surfaced by the auth slice.
     }
   };
 

@@ -34,25 +34,79 @@ export const loadServerCart = createAsyncThunk<CartItem[], void, { rejectValue: 
   },
 );
 
-export const mergeGuestCart = createAsyncThunk<CartItem[], CartItem[], { rejectValue: string }>(
-  'cart/mergeGuestCart',
-  async (guestItems, { rejectWithValue }) => {
-    try {
-      return await cartApi.mergeCart(guestItems);
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Failed to merge cart';
-      return rejectWithValue(message);
-    }
-  },
-);
+function addOne(items: CartItem[], product: Product): CartItem[] {
+  const existingItem = items.find((item) => item.product.id === product.id);
+  if (!existingItem) {
+    return [...items, { product, quantity: 1 }];
+  }
+  return items.map((item) =>
+    item.product.id === product.id ? { ...item, quantity: item.quantity + 1 } : item,
+  );
+}
 
-export const syncCartToServer = createAsyncThunk<void, CartItem[], { rejectValue: string }>(
-  'cart/syncCartToServer',
-  async (items, { rejectWithValue }) => {
+function decrementOne(items: CartItem[], productId: number): CartItem[] {
+  const existingItem = items.find((item) => item.product.id === productId);
+  if (!existingItem) {
+    return items;
+  }
+  if (existingItem.quantity <= 1) {
+    return items.filter((item) => item.product.id !== productId);
+  }
+  return items.map((item) =>
+    item.product.id === productId ? { ...item, quantity: item.quantity - 1 } : item,
+  );
+}
+
+export const addToCartServer = createAsyncThunk<
+  CartItem[],
+  Product,
+  { state: RootState; rejectValue: string }
+>('cart/addToCartServer', async (product, { getState, rejectWithValue }) => {
+  try {
+    const items = getState().cart.items;
+    return await cartApi.replaceCart(addOne(items, product));
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Failed to update cart';
+    return rejectWithValue(message);
+  }
+});
+
+export const decrementQuantityServer = createAsyncThunk<
+  CartItem[],
+  number,
+  { state: RootState; rejectValue: string }
+>('cart/decrementQuantityServer', async (productId, { getState, rejectWithValue }) => {
+  try {
+    const items = getState().cart.items;
+    return await cartApi.replaceCart(decrementOne(items, productId));
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Failed to update cart';
+    return rejectWithValue(message);
+  }
+});
+
+export const removeFromCartServer = createAsyncThunk<
+  CartItem[],
+  number,
+  { state: RootState; rejectValue: string }
+>('cart/removeFromCartServer', async (productId, { getState, rejectWithValue }) => {
+  try {
+    const items = getState().cart.items.filter((item) => item.product.id !== productId);
+    return await cartApi.replaceCart(items);
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Failed to update cart';
+    return rejectWithValue(message);
+  }
+});
+
+export const clearCartServer = createAsyncThunk<CartItem[], void, { rejectValue: string }>(
+  'cart/clearCartServer',
+  async (_, { rejectWithValue }) => {
     try {
-      await cartApi.replaceCart(items);
+      await cartApi.clearServerCart();
+      return [];
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Failed to sync cart';
+      const message = err instanceof Error ? err.message : 'Failed to clear cart';
       return rejectWithValue(message);
     }
   },
@@ -62,34 +116,6 @@ const cartSlice = createSlice({
   name: 'cart',
   initialState,
   reducers: {
-    hydrateCart(state, action: PayloadAction<CartItem[]>) {
-      state.items = action.payload;
-    },
-    addToCart(state, action: PayloadAction<Product>) {
-      const existingItem = state.items.find((item) => item.product.id === action.payload.id);
-      if (existingItem) {
-        existingItem.quantity += 1;
-        return;
-      }
-
-      state.items.push({ product: action.payload, quantity: 1 });
-    },
-    decrementQuantity(state, action: PayloadAction<number>) {
-      const existingItem = state.items.find((item) => item.product.id === action.payload);
-      if (!existingItem) {
-        return;
-      }
-
-      if (existingItem.quantity <= 1) {
-        state.items = state.items.filter((item) => item.product.id !== action.payload);
-        return;
-      }
-
-      existingItem.quantity -= 1;
-    },
-    removeFromCart(state, action: PayloadAction<number>) {
-      state.items = state.items.filter((item) => item.product.id !== action.payload);
-    },
     clearCart(state) {
       state.items = [];
     },
@@ -111,33 +137,58 @@ const cartSlice = createSlice({
         state.syncing = false;
         state.syncError = action.payload ?? 'Failed to load cart';
       })
-      .addCase(mergeGuestCart.pending, (state) => {
+      .addCase(addToCartServer.pending, (state) => {
         state.syncing = true;
         state.syncError = null;
       })
-      .addCase(mergeGuestCart.fulfilled, (state, action) => {
+      .addCase(addToCartServer.fulfilled, (state, action) => {
         state.syncing = false;
         state.items = action.payload;
       })
-      .addCase(mergeGuestCart.rejected, (state, action) => {
+      .addCase(addToCartServer.rejected, (state, action) => {
         state.syncing = false;
-        state.syncError = action.payload ?? 'Failed to merge cart';
+        state.syncError = action.payload ?? 'Failed to update cart';
       })
-      .addCase(syncCartToServer.pending, (state) => {
+      .addCase(decrementQuantityServer.pending, (state) => {
         state.syncing = true;
         state.syncError = null;
       })
-      .addCase(syncCartToServer.fulfilled, (state) => {
+      .addCase(decrementQuantityServer.fulfilled, (state, action) => {
         state.syncing = false;
+        state.items = action.payload;
       })
-      .addCase(syncCartToServer.rejected, (state, action) => {
+      .addCase(decrementQuantityServer.rejected, (state, action) => {
         state.syncing = false;
-        state.syncError = action.payload ?? 'Failed to sync cart';
+        state.syncError = action.payload ?? 'Failed to update cart';
+      })
+      .addCase(removeFromCartServer.pending, (state) => {
+        state.syncing = true;
+        state.syncError = null;
+      })
+      .addCase(removeFromCartServer.fulfilled, (state, action) => {
+        state.syncing = false;
+        state.items = action.payload;
+      })
+      .addCase(removeFromCartServer.rejected, (state, action) => {
+        state.syncing = false;
+        state.syncError = action.payload ?? 'Failed to update cart';
+      })
+      .addCase(clearCartServer.pending, (state) => {
+        state.syncing = true;
+        state.syncError = null;
+      })
+      .addCase(clearCartServer.fulfilled, (state, action) => {
+        state.syncing = false;
+        state.items = action.payload;
+      })
+      .addCase(clearCartServer.rejected, (state, action) => {
+        state.syncing = false;
+        state.syncError = action.payload ?? 'Failed to clear cart';
       });
   },
 });
 
-export const { hydrateCart, addToCart, decrementQuantity, removeFromCart, clearCart, clearCartSyncError } = cartSlice.actions;
+export const { clearCart, clearCartSyncError } = cartSlice.actions;
 
 export const selectCartItems = (state: RootState) => state.cart.items;
 export const selectCartCount = (state: RootState) =>

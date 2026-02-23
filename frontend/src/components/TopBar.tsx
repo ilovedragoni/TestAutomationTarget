@@ -8,6 +8,7 @@ import Target from './icons/Target';
 export default function TopBar() {
   const { isAuthenticated, checkingSession } = useAppSelector((state) => state.auth);
   const cartCount = useAppSelector(selectCartCount);
+  const cartCountLabel = cartCount > 99 ? '99+' : String(cartCount);
 
   return (
     <header className="topbar">
@@ -29,7 +30,7 @@ export default function TopBar() {
           <NavLink to="/cart" className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}>
             <Cart />
             <span className="cart-count" id="cart-count">
-              {cartCount}
+              {cartCountLabel}
             </span>
           </NavLink>
           <NavLink
