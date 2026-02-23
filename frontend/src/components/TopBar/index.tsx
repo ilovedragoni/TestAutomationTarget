@@ -1,9 +1,11 @@
 import { Link, NavLink } from 'react-router-dom';
 
-import { useAppSelector } from '../app/hooks';
-import { selectCartCount } from '../slices/cartSlice';
-import Cart from './icons/Cart';
-import Target from './icons/Target';
+import { useAppSelector } from '../../app/hooks';
+import { selectCartCount } from '../../slices/cartSlice';
+import Cart from '../icons/Cart';
+import Target from '../icons/Target';
+
+import './styles.css';
 
 export default function TopBar() {
   const { isAuthenticated, checkingSession } = useAppSelector((state) => state.auth);

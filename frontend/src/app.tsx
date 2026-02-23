@@ -7,17 +7,17 @@ import { useEffect } from 'react';
 
 import { useAppDispatch } from './app/hooks';
 import { store } from './app/store';
-import CartPage from './components/CartPage';
 import CartSync from './components/CartSync';
 import CategoryBar from './components/CategoryBar';
-import CheckoutPage from './components/CheckoutPage';
-import Contact from './components/Contact';
-import Home from './components/Home';
-import Profile from './components/Profile';
-import ProductList from './components/ProductList';
-import SignIn from './components/SignIn';
-import SignUp from './components/SignUp';
 import TopBar from './components/TopBar';
+import CartPage from './pages/CartPage';
+import CheckoutPage from './pages/CheckoutPage';
+import Contact from './pages/Contact';
+import Home from './pages/Home';
+import Profile from './pages/Profile';
+import ProductList from './pages/ProductList';
+import SignIn from './pages/SignIn';
+import SignUp from './pages/SignUp';
 import { restoreSession } from './slices/authSlice';
 
 import './index.css';

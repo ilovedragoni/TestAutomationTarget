@@ -2,9 +2,10 @@ import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 
-import { useAppDispatch, useAppSelector } from '../app/hooks';
-import { clearAuthFeedback, signIn } from '../slices/authSlice';
-import LoadingSpinner from './LoadingSpinner';
+import { useAppDispatch, useAppSelector } from '../../app/hooks';
+import LoadingSpinner from '../../components/LoadingSpinner';
+import { clearAuthFeedback, signIn } from '../../slices/authSlice';
+import './styles.css';
 
 export default function SignIn() {
   const dispatch = useAppDispatch();

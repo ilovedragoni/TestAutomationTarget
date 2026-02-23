@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
 import { NavLink, useSearchParams } from 'react-router-dom';
 
-import { fetchCategories } from '../api/categories';
-import { useAppDispatch } from '../app/hooks';
-import { setCategoryId } from '../slices/productSlice';
-import type { Category } from '../types/product';
+import { fetchCategories } from '../../api/categories';
+import { useAppDispatch } from '../../app/hooks';
+import { setCategoryId } from '../../slices/productSlice';
+import type { Category } from '../../types/product';
+
+import './styles.css';
 
 export default function CategoryBar() {
   const dispatch = useAppDispatch();

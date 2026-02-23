@@ -1,8 +1,10 @@
 import { Link } from 'react-router-dom';
 import { useState } from 'react';
 
-import { useAppSelector } from '../app/hooks';
-import { selectCartItems, selectCartSubtotal } from '../slices/cartSlice';
+import { useAppSelector } from '../../app/hooks';
+import AuthRequiredNotice from '../../components/AuthRequiredNotice';
+import { selectCartItems, selectCartSubtotal } from '../../slices/cartSlice';
+import './styles.css';
 
 function formatPrice(amount: number): string {
   return new Intl.NumberFormat('en-US', {
@@ -23,10 +25,7 @@ export default function CheckoutPage() {
       <section className="checkout-page" data-testid="checkout-page">
         <h1 id="checkout-title">Checkout</h1>
         <div className="checkout-empty" id="checkout-auth-required">
-          <p>You need to sign in before checking out.</p>
-          <p>
-            <Link to="/signin">Go to sign in</Link>
-          </p>
+          <AuthRequiredNotice message="You need to" suffix="before checking out." />
         </div>
       </section>
     );

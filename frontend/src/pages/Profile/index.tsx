@@ -1,8 +1,9 @@
 import { Link, Navigate } from 'react-router-dom';
 
-import { useAppDispatch, useAppSelector } from '../app/hooks';
-import { performSignOut } from '../slices/authSlice';
-import LoadingSpinner from './LoadingSpinner';
+import { useAppDispatch, useAppSelector } from '../../app/hooks';
+import LoadingSpinner from '../../components/LoadingSpinner';
+import { performSignOut } from '../../slices/authSlice';
+import './styles.css';
 
 export default function Profile() {
   const dispatch = useAppDispatch();
@@ -22,19 +23,19 @@ export default function Profile() {
   }
 
   return (
-    <section className="contact-page" data-testid="profile-page">
-      <h1 id="contact-title">Profile</h1>
-      <p className="contact-intro">You are currently signed in.</p>
+    <section className="profile-page" data-testid="profile-page">
+      <h1 id="profile-title">Profile</h1>
+      <p className="profile-intro">You are currently signed in.</p>
 
-      <div className="contact-grid">
-        <article className="contact-card" aria-label="Profile details">
+      <div className="profile-grid">
+        <article className="profile-card" aria-label="Profile details">
           <h2>Account</h2>
           <p>Email: {user?.email ?? '--'}</p>
           <p>Name: {user?.name?.trim() || '--'}</p>
         </article>
       </div>
 
-      <p className="contact-back">
+      <p className="profile-actions">
         <button type="button" id="signout-button" onClick={() => void dispatch(performSignOut())} disabled={signingOut}>
           {signingOut ? (
             <>
@@ -46,7 +47,7 @@ export default function Profile() {
           )}
         </button>
       </p>
-      <p className="contact-back">
+      <p className="profile-actions">
         <Link to="/products">Back to shopping</Link>
       </p>
     </section>

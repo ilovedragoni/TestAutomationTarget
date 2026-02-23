@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 
-import { useAppDispatch, useAppSelector } from '../app/hooks';
+import { useAppDispatch, useAppSelector } from '../../app/hooks';
+import AuthRequiredNotice from '../../components/AuthRequiredNotice';
 import {
   addToCartServer,
   clearCartServer,
@@ -9,7 +10,8 @@ import {
   selectCartItems,
   selectCartSubtotal,
   selectCartSyncing,
-} from '../slices/cartSlice';
+} from '../../slices/cartSlice';
+import './styles.css';
 
 function formatPrice(amount: number): string {
   return new Intl.NumberFormat('en-US', {
@@ -29,7 +31,7 @@ export default function CartPage() {
     return (
       <section className="cart-page" data-testid="cart-page">
         <h1 id="cart-title">Shopping Cart</h1>
-        <p className="not-logged-in-text">You need to <Link to="/signin">sign in</Link> to add items to cart.</p>
+        <AuthRequiredNotice />
       </section>
     );
   }

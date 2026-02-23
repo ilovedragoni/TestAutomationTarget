@@ -1,11 +1,11 @@
 import { useEffect, useRef } from 'react';
 
-import { useAppDispatch, useAppSelector } from '../app/hooks';
+import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import {
   clearCart,
   loadServerCart,
   selectCartItems,
-} from '../slices/cartSlice';
+} from '../../slices/cartSlice';
 
 export default function CartSync() {
   const dispatch = useAppDispatch();

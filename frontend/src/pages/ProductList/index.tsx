@@ -1,16 +1,17 @@
 import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
-import { Link } from 'react-router-dom';
 
-import { useAppDispatch, useAppSelector } from '../app/hooks';
-import LoadingSpinner from './LoadingSpinner';
-import { addToCartServer } from '../slices/cartSlice';
+import { useAppDispatch, useAppSelector } from '../../app/hooks';
+import AuthRequiredNotice from '../../components/AuthRequiredNotice';
+import LoadingSpinner from '../../components/LoadingSpinner';
+import { addToCartServer } from '../../slices/cartSlice';
 import {
   clearMessage,
   loadProducts,
   setPage,
   setSearch,
-} from '../slices/productSlice';
+} from '../../slices/productSlice';
+import './styles.css';
 
 export default function ProductList() {
   const dispatch = useAppDispatch();
@@ -53,11 +54,7 @@ export default function ProductList() {
       <p id="page-description">
         Target app for test automation. Use data-testid and ids for selectors.
       </p>
-      {!checkingSession && !isAuthenticated && (
-        <p className="not-logged-in-text">
-          You need to <Link to="/signin">sign in</Link> to add items to cart.
-        </p>
-      )}
+      {!checkingSession && !isAuthenticated && <AuthRequiredNotice />}
 
       {message && (
         <div className="message success" id="flash-message" role="alert">

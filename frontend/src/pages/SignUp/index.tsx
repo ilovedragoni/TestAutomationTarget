@@ -2,9 +2,10 @@ import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 
-import { useAppDispatch, useAppSelector } from '../app/hooks';
-import { clearSignUpFeedback, signUp } from '../slices/signupSlice';
-import LoadingSpinner from './LoadingSpinner';
+import { useAppDispatch, useAppSelector } from '../../app/hooks';
+import LoadingSpinner from '../../components/LoadingSpinner';
+import { clearSignUpFeedback, signUp } from '../../slices/signupSlice';
+import './styles.css';
 
 export default function SignUp() {
   const dispatch = useAppDispatch();

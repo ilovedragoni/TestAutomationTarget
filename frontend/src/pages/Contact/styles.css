@@ -1,0 +1,41 @@
+.contact-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+#contact-title {
+  margin: 0;
+}
+
+.contact-intro {
+  margin: 0;
+  color: var(--muted);
+}
+
+.contact-grid {
+  display: grid;
+  gap: 0.9rem;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.contact-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 0.9rem;
+}
+
+.contact-card h2 {
+  margin: 0 0 0.45rem;
+  color: var(--brand-strong);
+  font-size: 1rem;
+}
+
+.contact-card p {
+  margin: 0.2rem 0;
+}
+
+.contact-back {
+  margin: 0.35rem 0 0;
+}

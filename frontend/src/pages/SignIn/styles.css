@@ -1,0 +1,78 @@
+.signin-page {
+  display: flex;
+  justify-content: center;
+}
+
+.signin-card {
+  width: 100%;
+  max-width: 460px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  padding: 1.1rem;
+}
+
+#signin-title {
+  margin: 0;
+}
+
+.signin-intro {
+  margin: 0.45rem 0 1rem;
+  color: var(--muted);
+}
+
+.signin-form {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.signin-form label {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.signin-form input[type="email"],
+.signin-form input[type="password"] {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0.6rem 0.65rem;
+}
+
+.signin-form input[type="email"]:focus,
+.signin-form input[type="password"]:focus {
+  outline: 2px solid rgba(17, 94, 89, 0.22);
+  border-color: var(--brand-strong);
+}
+
+.signin-remember {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.2rem;
+}
+
+.signin-remember input {
+  width: auto;
+}
+
+#signin-submit {
+  margin-top: 0.35rem;
+  background: var(--brand);
+  border-color: var(--brand);
+}
+
+#signin-submit:hover {
+  background: var(--brand-strong);
+  border-color: var(--brand-strong);
+}
+
+#signin-submit:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.signin-meta {
+  margin: 0.9rem 0 0;
+  color: var(--muted);
+  font-size: 0.94rem;
+}
