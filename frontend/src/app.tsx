@@ -12,6 +12,7 @@ import CategoryBar from './components/CategoryBar';
 import TopBar from './components/TopBar';
 import CartPage from './pages/CartPage';
 import CheckoutPage from './pages/CheckoutPage';
+import CheckoutSuccess from './pages/CheckoutSuccess';
 import Contact from './pages/Contact';
 import Home from './pages/Home';
 import Profile from './pages/Profile';
@@ -50,6 +51,7 @@ function AppContent() {
           <Route path="/products" element={<ProductList />} />
           <Route path="/cart" element={<CartPage />} />
           <Route path="/checkout" element={<CheckoutPage />} />
+          <Route path="/checkout/success" element={<CheckoutSuccess />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/signin" element={<SignIn />} />
           <Route path="/signup" element={<SignUp />} />

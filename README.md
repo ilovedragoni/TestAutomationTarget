@@ -5,7 +5,8 @@ A Spring Boot + React application built as a practical target for UI/API test au
 The app includes:
 - Product/catalog browsing
 - Authentication (sign up/sign in/session restore/sign out)
-- Cart flows (guest cart + authenticated server cart merge/sync)
+- Authenticated cart flows (server-backed)
+- Checkout flow with persisted orders
 
 ## Stack
 
@@ -64,6 +65,12 @@ Start PostgreSQL quickly:
 docker compose up -d
 ```
 
+Wipe the data completely:
+
+```bash
+docker compose down -v
+```
+
 ### Tests
 
 Tests run with H2 and the `test` profile (`src/main/resources/application-test.yml`).
@@ -85,9 +92,11 @@ Disabled in `test` profile.
 - `/` Home (test automation information)
 - `/products` Product catalog
 - `/cart` Shopping cart
+- `/checkout` Checkout form
+- `/checkout/success` One-time order confirmation screen
 - `/signin` Sign in
 - `/signup` Sign up
-- `/profile` Signed-in profile page
+- `/profile` Signed-in profile page (Orders + Account sections)
 - `/contact` Contact page
 
 ## Current API Surface
@@ -105,20 +114,32 @@ Disabled in `test` profile.
 - `GET /api/auth/me` (returns `401` when no valid session)
 - `POST /api/auth/logout`
 
-### Authenticated (`/api/cart/**`)
+### Authenticated
 
+Cart:
 - `GET /api/cart`
 - `PUT /api/cart` (replace cart)
-- `POST /api/cart/merge` (merge payload into existing cart)
 - `DELETE /api/cart` (clear cart)
+
+Checkout:
+- `POST /api/checkout` (creates order + order items, clears cart)
+
+Orders:
+- `GET /api/orders` (current user order history)
 
 ## Cart Behavior
 
-The frontend uses a hybrid cart model:
+The cart is server-backed and requires authentication:
 
-1. Guest cart persists in `localStorage`.
-2. After sign-in, guest cart is merged into server cart (`POST /api/cart/merge`).
-3. While authenticated, cart updates sync to server (`PUT /api/cart`).
+1. Users must be signed in to add/update/remove cart items.
+2. Cart changes are synced to backend via `PUT /api/cart`.
+3. Checkout (`POST /api/checkout`) validates cart/subtotal, creates an order, and clears the cart.
+4. Users can review order history from Profile (Orders), powered by `GET /api/orders`.
+
+## Checkout UX Notes
+
+- Successful checkout redirects to `/checkout/success`.
+- The confirmation screen is intended as a one-time post-checkout view and relies on navigation state from the checkout flow.
 
 ## Testing Notes
 

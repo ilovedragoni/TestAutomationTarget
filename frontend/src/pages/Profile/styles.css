@@ -13,10 +13,40 @@
   color: var(--muted);
 }
 
-.profile-grid {
+.profile-layout {
   display: grid;
-  gap: 0.9rem;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+  grid-template-columns: 220px minmax(0, 1fr);
+}
+
+.profile-submenu {
+  display: grid;
+  gap: 0.45rem;
+  align-content: start;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  padding: 0.55rem;
+  height: fit-content;
+}
+
+.profile-submenu-link {
+  border: 1px solid var(--line);
+  background: #f7fafc;
+  color: var(--ink);
+  border-radius: 8px;
+  padding: 0.5rem 0.7rem;
+  text-align: left;
+}
+
+.profile-submenu-link.active {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: #fff;
+}
+
+.profile-content {
+  min-width: 0;
 }
 
 .profile-card {
@@ -36,6 +66,85 @@
   margin: 0.2rem 0;
 }
 
+.profile-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.8rem;
+  margin-bottom: 0.5rem;
+}
+
+.profile-empty-orders {
+  margin: 0;
+  color: var(--muted);
+}
+
+.profile-orders-list {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.profile-order-card {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 0.75rem;
+  background: #fbfdff;
+}
+
+.profile-order-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.profile-order-id {
+  margin: 0;
+  font-weight: 700;
+}
+
+.profile-order-status {
+  text-transform: uppercase;
+  font-size: 0.74rem;
+  letter-spacing: 0.04em;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 0.2rem 0.55rem;
+}
+
+.profile-order-meta {
+  margin: 0.35rem 0 0.4rem;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.profile-order-items {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.profile-order-items p {
+  margin: 0;
+}
+
+.profile-order-subtotal {
+  margin: 0.5rem 0 0;
+}
+
 .profile-actions {
   margin: 0.35rem 0 0;
+}
+
+@media (max-width: 860px) {
+  .profile-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-submenu {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .profile-submenu-link {
+    text-align: center;
+  }
 }
