@@ -11,13 +11,23 @@ import java.util.List;
 
 public class CheckoutRequest {
 
-    @NotNull(message = "shipping is required")
     @Valid
     private CheckoutShippingRequest shipping;
 
-    @NotNull(message = "payment is required")
     @Valid
     private CheckoutPaymentRequest payment;
+
+    private Long savedAddressId;
+
+    private Long savedPaymentMethodId;
+
+    private boolean saveShippingAddress;
+
+    private String shippingAddressLabel;
+
+    private boolean savePaymentMethod;
+
+    private String paymentMethodLabel;
 
     @NotEmpty(message = "items must not be empty")
     @Valid
@@ -44,6 +54,54 @@ public class CheckoutRequest {
 
     public void setPayment(CheckoutPaymentRequest payment) {
         this.payment = payment;
+    }
+
+    public Long getSavedAddressId() {
+        return savedAddressId;
+    }
+
+    public void setSavedAddressId(Long savedAddressId) {
+        this.savedAddressId = savedAddressId;
+    }
+
+    public Long getSavedPaymentMethodId() {
+        return savedPaymentMethodId;
+    }
+
+    public void setSavedPaymentMethodId(Long savedPaymentMethodId) {
+        this.savedPaymentMethodId = savedPaymentMethodId;
+    }
+
+    public boolean isSaveShippingAddress() {
+        return saveShippingAddress;
+    }
+
+    public void setSaveShippingAddress(boolean saveShippingAddress) {
+        this.saveShippingAddress = saveShippingAddress;
+    }
+
+    public String getShippingAddressLabel() {
+        return shippingAddressLabel;
+    }
+
+    public void setShippingAddressLabel(String shippingAddressLabel) {
+        this.shippingAddressLabel = shippingAddressLabel;
+    }
+
+    public boolean isSavePaymentMethod() {
+        return savePaymentMethod;
+    }
+
+    public void setSavePaymentMethod(boolean savePaymentMethod) {
+        this.savePaymentMethod = savePaymentMethod;
+    }
+
+    public String getPaymentMethodLabel() {
+        return paymentMethodLabel;
+    }
+
+    public void setPaymentMethodLabel(String paymentMethodLabel) {
+        this.paymentMethodLabel = paymentMethodLabel;
     }
 
     public List<CheckoutItemRequest> getItems() {

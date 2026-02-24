@@ -1,5 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import AuthRequiredNotice from '../../components/AuthRequiredNotice';
@@ -11,6 +11,15 @@ import {
   selectCheckoutError,
   selectCheckoutSubmitting,
 } from '../../slices/checkoutSlice';
+import {
+  loadAddresses,
+  loadPaymentMethods,
+  selectAddresses,
+  selectPaymentMethods,
+  selectProfileError,
+  selectProfileLoadingAddresses,
+  selectProfileLoadingPaymentMethods,
+} from '../../slices/profileSlice';
 import { toCheckoutItems } from '../../types/checkout';
 import {
   type CheckoutFormErrors,
@@ -38,7 +47,20 @@ export default function CheckoutPage() {
   const subtotal = useAppSelector(selectCartSubtotal);
   const submitting = useAppSelector(selectCheckoutSubmitting);
   const checkoutError = useAppSelector(selectCheckoutError);
+  const addresses = useAppSelector(selectAddresses);
+  const paymentMethods = useAppSelector(selectPaymentMethods);
+  const loadingAddresses = useAppSelector(selectProfileLoadingAddresses);
+  const loadingPaymentMethods = useAppSelector(selectProfileLoadingPaymentMethods);
+  const profileError = useAppSelector(selectProfileError);
+
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('card');
+  const [selectedAddressId, setSelectedAddressId] = useState<string>('new');
+  const [selectedPaymentMethodId, setSelectedPaymentMethodId] = useState<string>('new');
+  const [saveShippingAddress, setSaveShippingAddress] = useState(false);
+  const [shippingAddressLabel, setShippingAddressLabel] = useState('');
+  const [savePaymentMethod, setSavePaymentMethod] = useState(false);
+  const [paymentMethodLabel, setPaymentMethodLabel] = useState('');
+
   const [showErrors, setShowErrors] = useState(false);
   const [errors, setErrors] = useState<CheckoutFormErrors>({});
   const [formValues, setFormValues] = useState<CheckoutFormValues>({
@@ -54,13 +76,94 @@ export default function CheckoutPage() {
     paypalEmail: '',
   });
 
+  const requireShippingInput = selectedAddressId === 'new';
+  const requirePaymentInput = selectedPaymentMethodId === 'new';
+
+  const selectedSavedAddress = useMemo(
+    () => addresses.find((item) => String(item.id) === selectedAddressId),
+    [addresses, selectedAddressId],
+  );
+
+  const selectedSavedPaymentMethod = useMemo(
+    () => paymentMethods.find((item) => String(item.id) === selectedPaymentMethodId),
+    [paymentMethods, selectedPaymentMethodId],
+  );
+
+  useEffect(() => {
+    if (!checkingSession && isAuthenticated) {
+      void dispatch(loadAddresses());
+      void dispatch(loadPaymentMethods());
+    }
+  }, [dispatch, checkingSession, isAuthenticated]);
+
+  useEffect(() => {
+    if (selectedAddressId !== 'new') {
+      return;
+    }
+
+    const defaultAddress = addresses.find((item) => item.isDefault) ?? addresses[0];
+    if (defaultAddress) {
+      setSelectedAddressId(String(defaultAddress.id));
+    }
+  }, [addresses, selectedAddressId]);
+
+  useEffect(() => {
+    if (selectedPaymentMethodId !== 'new') {
+      return;
+    }
+
+    const defaultPaymentMethod = paymentMethods.find((item) => item.isDefault) ?? paymentMethods[0];
+    if (defaultPaymentMethod) {
+      setSelectedPaymentMethodId(String(defaultPaymentMethod.id));
+    }
+  }, [paymentMethods, selectedPaymentMethodId]);
+
+  useEffect(() => {
+    if (!selectedSavedAddress) {
+      return;
+    }
+
+    setFormValues((prev) => ({
+      ...prev,
+      fullName: selectedSavedAddress.fullName,
+      email: selectedSavedAddress.email,
+      address: selectedSavedAddress.address,
+      city: selectedSavedAddress.city,
+      postalCode: selectedSavedAddress.postalCode,
+      country: selectedSavedAddress.country,
+    }));
+  }, [selectedSavedAddress]);
+
+  useEffect(() => {
+    if (!selectedSavedPaymentMethod) {
+      return;
+    }
+    setPaymentMethod(selectedSavedPaymentMethod.method);
+    if (selectedSavedPaymentMethod.method === 'paypal') {
+      setFormValues((prev) => ({
+        ...prev,
+        paypalEmail: selectedSavedPaymentMethod.paypalEmail ?? prev.paypalEmail,
+      }));
+    } else {
+      setFormValues((prev) => ({
+        ...prev,
+        cardExpiry: selectedSavedPaymentMethod.cardExpiry ?? prev.cardExpiry,
+      }));
+    }
+  }, [selectedSavedPaymentMethod]);
+
   const setFieldValue = (field: keyof CheckoutFormValues, value: string) => {
     const nextValues = { ...formValues, [field]: value };
     setFormValues(nextValues);
     dispatch(clearCheckoutFeedback());
 
     if (showErrors) {
-      setErrors(validateCheckout(nextValues, paymentMethod));
+      setErrors(
+        validateCheckout(nextValues, paymentMethod, {
+          requireShipping: requireShippingInput,
+          requirePayment: requirePaymentInput,
+        }),
+      );
     }
   };
 
@@ -69,7 +172,12 @@ export default function CheckoutPage() {
     dispatch(clearCheckoutFeedback());
 
     if (showErrors) {
-      setErrors(validateCheckout(formValues, method));
+      setErrors(
+        validateCheckout(formValues, method, {
+          requireShipping: requireShippingInput,
+          requirePayment: requirePaymentInput,
+        }),
+      );
     }
   };
 
@@ -101,10 +209,15 @@ export default function CheckoutPage() {
   return (
     <section className="checkout-page" data-testid="checkout-page">
       <h1 id="checkout-title">Checkout</h1>
-      <p className="checkout-intro">Frontend checkout flow only for now. Payment and order APIs will be added later.</p>
+      <p className="checkout-intro">Checkout supports saved addresses and payment methods for faster repeat orders.</p>
       {checkoutError && (
         <div className="message error" id="checkout-error" role="alert">
           {checkoutError}
+        </div>
+      )}
+      {profileError && (
+        <div className="message error" id="checkout-profile-error" role="alert">
+          {profileError}
         </div>
       )}
 
@@ -114,7 +227,10 @@ export default function CheckoutPage() {
           id="checkout-form"
           onSubmit={async (event) => {
             event.preventDefault();
-            const nextErrors = validateCheckout(formValues, paymentMethod);
+            const nextErrors = validateCheckout(formValues, paymentMethod, {
+              requireShipping: requireShippingInput,
+              requirePayment: requirePaymentInput,
+            });
             setShowErrors(true);
             setErrors(nextErrors);
 
@@ -123,26 +239,38 @@ export default function CheckoutPage() {
             }
 
             const payload = {
-              shipping: {
-                fullName: formValues.fullName.trim(),
-                email: formValues.email.trim(),
-                address: formValues.address.trim(),
-                city: formValues.city.trim(),
-                postalCode: formValues.postalCode.trim(),
-                country: formValues.country.trim(),
-              },
-              payment:
-                paymentMethod === 'card'
-                  ? {
-                      method: 'card' as const,
-                      cardNumber: formValues.cardNumber.replace(/\s+/g, ''),
-                      cardExpiry: formValues.cardExpiry.trim(),
-                      cardCvc: formValues.cardCvc.trim(),
-                    }
-                  : {
-                      method: 'paypal' as const,
-                      paypalEmail: formValues.paypalEmail.trim(),
+              ...(requireShippingInput
+                ? {
+                    shipping: {
+                      fullName: formValues.fullName.trim(),
+                      email: formValues.email.trim(),
+                      address: formValues.address.trim(),
+                      city: formValues.city.trim(),
+                      postalCode: formValues.postalCode.trim(),
+                      country: formValues.country.trim(),
                     },
+                    saveShippingAddress,
+                    ...(saveShippingAddress ? { shippingAddressLabel: shippingAddressLabel.trim() || 'Saved address' } : {}),
+                  }
+                : { savedAddressId: Number(selectedAddressId) }),
+              ...(requirePaymentInput
+                ? {
+                    payment:
+                      paymentMethod === 'card'
+                        ? {
+                            method: 'card' as const,
+                            cardNumber: formValues.cardNumber.replace(/\s+/g, ''),
+                            cardExpiry: formValues.cardExpiry.trim(),
+                            cardCvc: formValues.cardCvc.trim(),
+                          }
+                        : {
+                            method: 'paypal' as const,
+                            paypalEmail: formValues.paypalEmail.trim(),
+                          },
+                    savePaymentMethod,
+                    ...(savePaymentMethod ? { paymentMethodLabel: paymentMethodLabel.trim() || 'Saved payment method' } : {}),
+                  }
+                : { savedPaymentMethodId: Number(selectedPaymentMethodId) }),
               items: toCheckoutItems(items),
               subtotal,
               currency: 'USD' as const,
@@ -153,6 +281,10 @@ export default function CheckoutPage() {
               await dispatch(clearCartServer()).unwrap();
               setShowErrors(false);
               setErrors({});
+              setSaveShippingAddress(false);
+              setSavePaymentMethod(false);
+              setShippingAddressLabel('');
+              setPaymentMethodLabel('');
               setFormValues({
                 fullName: '',
                 email: '',
@@ -179,6 +311,29 @@ export default function CheckoutPage() {
           noValidate
         >
           <h2>Shipping details</h2>
+          <label htmlFor="checkout-saved-address">Use saved address</label>
+          <select
+            id="checkout-saved-address"
+            value={selectedAddressId}
+            onChange={(event) => setSelectedAddressId(event.target.value)}
+            disabled={loadingAddresses}
+          >
+            <option value="new">{loadingAddresses ? 'Loading addresses...' : 'Enter a new address'}</option>
+            {addresses.map((address) => (
+              <option key={address.id} value={String(address.id)}>
+                {address.label}
+                {address.isDefault ? ' (Default)' : ''}
+              </option>
+            ))}
+          </select>
+
+          {selectedSavedAddress && selectedAddressId !== 'new' && (
+            <p className="checkout-saved-preview">
+              {selectedSavedAddress.fullName}, {selectedSavedAddress.address}, {selectedSavedAddress.city}{' '}
+              {selectedSavedAddress.postalCode}
+            </p>
+          )}
+
           <label htmlFor="checkout-full-name">Full name</label>
           <input
             id="checkout-full-name"
@@ -190,6 +345,7 @@ export default function CheckoutPage() {
             aria-invalid={Boolean(errors.fullName)}
             aria-describedby={errors.fullName ? 'checkout-full-name-error' : undefined}
             className={errors.fullName ? 'checkout-input-error' : undefined}
+            disabled={!requireShippingInput}
           />
           {errors.fullName && (
             <p className="error checkout-field-error" id="checkout-full-name-error">
@@ -208,6 +364,7 @@ export default function CheckoutPage() {
             aria-invalid={Boolean(errors.email)}
             aria-describedby={errors.email ? 'checkout-email-error' : undefined}
             className={errors.email ? 'checkout-input-error' : undefined}
+            disabled={!requireShippingInput}
           />
           {errors.email && (
             <p className="error checkout-field-error" id="checkout-email-error">
@@ -226,6 +383,7 @@ export default function CheckoutPage() {
             aria-invalid={Boolean(errors.address)}
             aria-describedby={errors.address ? 'checkout-address-error' : undefined}
             className={errors.address ? 'checkout-input-error' : undefined}
+            disabled={!requireShippingInput}
           />
           {errors.address && (
             <p className="error checkout-field-error" id="checkout-address-error">
@@ -246,6 +404,7 @@ export default function CheckoutPage() {
                 aria-invalid={Boolean(errors.city)}
                 aria-describedby={errors.city ? 'checkout-city-error' : undefined}
                 className={errors.city ? 'checkout-input-error' : undefined}
+                disabled={!requireShippingInput}
               />
               {errors.city && (
                 <p className="error checkout-field-error" id="checkout-city-error">
@@ -265,6 +424,7 @@ export default function CheckoutPage() {
                 aria-invalid={Boolean(errors.postalCode)}
                 aria-describedby={errors.postalCode ? 'checkout-postal-error' : undefined}
                 className={errors.postalCode ? 'checkout-input-error' : undefined}
+                disabled={!requireShippingInput}
               />
               {errors.postalCode && (
                 <p className="error checkout-field-error" id="checkout-postal-error">
@@ -285,6 +445,7 @@ export default function CheckoutPage() {
             aria-invalid={Boolean(errors.country)}
             aria-describedby={errors.country ? 'checkout-country-error' : undefined}
             className={errors.country ? 'checkout-input-error' : undefined}
+            disabled={!requireShippingInput}
           />
           {errors.country && (
             <p className="error checkout-field-error" id="checkout-country-error">
@@ -292,8 +453,57 @@ export default function CheckoutPage() {
             </p>
           )}
 
+          {requireShippingInput && (
+            <>
+              <label className="checkout-inline-check">
+                <input
+                  type="checkbox"
+                  checked={saveShippingAddress}
+                  onChange={(event) => setSaveShippingAddress(event.target.checked)}
+                />
+                Save this address for next checkout
+              </label>
+              {saveShippingAddress && (
+                <>
+                  <label htmlFor="checkout-shipping-label">Address label</label>
+                  <input
+                    id="checkout-shipping-label"
+                    type="text"
+                    placeholder="Home, Work, etc."
+                    value={shippingAddressLabel}
+                    onChange={(event) => setShippingAddressLabel(event.target.value)}
+                  />
+                </>
+              )}
+            </>
+          )}
+
           <h2 className="payment-title">Payment method</h2>
-          <fieldset className="checkout-payment-options">
+          <label htmlFor="checkout-saved-payment">Use saved payment method</label>
+          <select
+            id="checkout-saved-payment"
+            value={selectedPaymentMethodId}
+            onChange={(event) => setSelectedPaymentMethodId(event.target.value)}
+            disabled={loadingPaymentMethods}
+          >
+            <option value="new">{loadingPaymentMethods ? 'Loading payment methods...' : 'Enter a new payment method'}</option>
+            {paymentMethods.map((method) => (
+              <option key={method.id} value={String(method.id)}>
+                {method.label}
+                {method.isDefault ? ' (Default)' : ''}
+              </option>
+            ))}
+          </select>
+
+          {selectedSavedPaymentMethod && selectedPaymentMethodId !== 'new' && (
+            <p className="checkout-saved-preview">
+              {selectedSavedPaymentMethod.method === 'card'
+                ? `Card ending ${selectedSavedPaymentMethod.cardLast4 ?? '----'} (${selectedSavedPaymentMethod.cardExpiry ?? '--/--'})`
+                : `PayPal (${selectedSavedPaymentMethod.paypalEmail ?? ''})`}
+            </p>
+          )}
+
+          <fieldset className="checkout-payment-options" disabled={!requirePaymentInput}>
             <label className="checkout-payment-option" htmlFor="checkout-pay-card">
               <input
                 id="checkout-pay-card"
@@ -318,7 +528,7 @@ export default function CheckoutPage() {
             </label>
           </fieldset>
 
-          {paymentMethod === 'card' && (
+          {requirePaymentInput && paymentMethod === 'card' && (
             <div className="checkout-payment-panel" id="checkout-card-fields">
               <label htmlFor="checkout-card-number">Card number</label>
               <input
@@ -388,7 +598,7 @@ export default function CheckoutPage() {
             </div>
           )}
 
-          {paymentMethod === 'paypal' && (
+          {requirePaymentInput && paymentMethod === 'paypal' && (
             <div className="checkout-payment-panel" id="checkout-paypal-fields">
               <label htmlFor="checkout-paypal-email">PayPal email</label>
               <input
@@ -409,6 +619,31 @@ export default function CheckoutPage() {
                 </p>
               )}
             </div>
+          )}
+
+          {requirePaymentInput && (
+            <>
+              <label className="checkout-inline-check">
+                <input
+                  type="checkbox"
+                  checked={savePaymentMethod}
+                  onChange={(event) => setSavePaymentMethod(event.target.checked)}
+                />
+                Save this payment method for next checkout
+              </label>
+              {savePaymentMethod && (
+                <>
+                  <label htmlFor="checkout-payment-label">Payment label</label>
+                  <input
+                    id="checkout-payment-label"
+                    type="text"
+                    placeholder="Primary card, Work PayPal, etc."
+                    value={paymentMethodLabel}
+                    onChange={(event) => setPaymentMethodLabel(event.target.value)}
+                  />
+                </>
+              )}
+            </>
           )}
 
           <button type="submit" id="checkout-place-order" disabled={submitting}>
@@ -437,9 +672,7 @@ export default function CheckoutPage() {
           <p className="checkout-subtotal">
             Subtotal: <strong id="checkout-subtotal">{formatPrice(subtotal)}</strong>
           </p>
-          <p className="checkout-meta">
-            Taxes, shipping, and backend payment processing will be added in the next phase.
-          </p>
+          <p className="checkout-meta">Order totals are validated server-side before finalizing checkout.</p>
         </aside>
       </div>
     </section>

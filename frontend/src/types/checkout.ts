@@ -26,8 +26,14 @@ export interface CheckoutPaypalPaymentDetails {
 export type CheckoutPaymentDetails = CheckoutCardPaymentDetails | CheckoutPaypalPaymentDetails;
 
 export interface CheckoutRequest {
-  shipping: CheckoutShippingDetails;
-  payment: CheckoutPaymentDetails;
+  shipping?: CheckoutShippingDetails;
+  payment?: CheckoutPaymentDetails;
+  savedAddressId?: number;
+  savedPaymentMethodId?: number;
+  saveShippingAddress?: boolean;
+  shippingAddressLabel?: string;
+  savePaymentMethod?: boolean;
+  paymentMethodLabel?: string;
   items: Array<{
     productId: number;
     quantity: number;

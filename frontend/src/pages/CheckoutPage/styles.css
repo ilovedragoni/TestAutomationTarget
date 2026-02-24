@@ -84,6 +84,19 @@
   margin-top: -0.25rem;
 }
 
+.checkout-saved-preview {
+  margin: -0.15rem 0 0.25rem;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.checkout-inline-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 500;
+}
+
 .checkout-payment-options {
   margin: 0;
   padding: 0;

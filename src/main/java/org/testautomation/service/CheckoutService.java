@@ -7,12 +7,16 @@ import org.testautomation.domain.CheckoutPaymentRequest;
 import org.testautomation.domain.CheckoutRequest;
 import org.testautomation.domain.CheckoutResponse;
 import org.testautomation.entity.UserAccount;
+import org.testautomation.entity.UserAddress;
 import org.testautomation.entity.UserCartItem;
 import org.testautomation.entity.UserOrder;
 import org.testautomation.entity.UserOrderItem;
+import org.testautomation.entity.UserPaymentMethod;
 import org.testautomation.repository.UserAccountRepository;
+import org.testautomation.repository.UserAddressRepository;
 import org.testautomation.repository.UserCartItemRepository;
 import org.testautomation.repository.UserOrderRepository;
+import org.testautomation.repository.UserPaymentMethodRepository;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -30,15 +34,21 @@ public class CheckoutService {
     private final UserAccountRepository userAccountRepository;
     private final UserCartItemRepository userCartItemRepository;
     private final UserOrderRepository userOrderRepository;
+    private final UserAddressRepository userAddressRepository;
+    private final UserPaymentMethodRepository userPaymentMethodRepository;
 
     public CheckoutService(
             UserAccountRepository userAccountRepository,
             UserCartItemRepository userCartItemRepository,
-            UserOrderRepository userOrderRepository
+            UserOrderRepository userOrderRepository,
+            UserAddressRepository userAddressRepository,
+            UserPaymentMethodRepository userPaymentMethodRepository
     ) {
         this.userAccountRepository = userAccountRepository;
         this.userCartItemRepository = userCartItemRepository;
         this.userOrderRepository = userOrderRepository;
+        this.userAddressRepository = userAddressRepository;
+        this.userPaymentMethodRepository = userPaymentMethodRepository;
     }
 
     @Transactional
@@ -55,29 +65,27 @@ public class CheckoutService {
         BigDecimal subtotal = calculateSubtotal(cartItems);
         validateSubtotal(subtotal, request.getSubtotal());
 
-        CheckoutPaymentRequest payment = request.getPayment();
-        String paymentMethod = normalizePaymentMethod(payment.getMethod());
-        validatePaymentByMethod(payment, paymentMethod);
+        UserAddress resolvedAddress = resolveAddress(userAccount, request);
+        ResolvedPayment resolvedPayment = resolvePayment(userAccount, request);
 
         UserOrder order = new UserOrder();
         order.setUser(userAccount);
         order.setStatus("accepted");
         order.setCurrency(SUPPORTED_CURRENCY);
         order.setSubtotal(subtotal);
-        order.setShippingFullName(request.getShipping().getFullName().trim());
-        order.setShippingEmail(request.getShipping().getEmail().trim().toLowerCase(Locale.ROOT));
-        order.setShippingAddress(request.getShipping().getAddress().trim());
-        order.setShippingCity(request.getShipping().getCity().trim());
-        order.setShippingPostalCode(request.getShipping().getPostalCode().trim());
-        order.setShippingCountry(request.getShipping().getCountry().trim());
-        order.setPaymentMethod(paymentMethod);
+        order.setShippingFullName(resolvedAddress.getFullName());
+        order.setShippingEmail(resolvedAddress.getEmail());
+        order.setShippingAddress(resolvedAddress.getAddress());
+        order.setShippingCity(resolvedAddress.getCity());
+        order.setShippingPostalCode(resolvedAddress.getPostalCode());
+        order.setShippingCountry(resolvedAddress.getCountry());
+        order.setPaymentMethod(resolvedPayment.method);
 
-        if ("card".equals(paymentMethod)) {
-            String cardNumber = payment.getCardNumber().trim();
-            order.setPaymentCardLast4(cardNumber.substring(cardNumber.length() - 4));
-            order.setPaymentCardExpiry(payment.getCardExpiry().trim());
+        if ("card".equals(resolvedPayment.method)) {
+            order.setPaymentCardLast4(resolvedPayment.cardLast4);
+            order.setPaymentCardExpiry(resolvedPayment.cardExpiry);
         } else {
-            order.setPaymentPaypalEmail(payment.getPaypalEmail().trim().toLowerCase(Locale.ROOT));
+            order.setPaymentPaypalEmail(resolvedPayment.paypalEmail);
         }
 
         for (UserCartItem cartItem : cartItems) {
@@ -168,6 +176,119 @@ public class CheckoutService {
         throw new IllegalArgumentException("Unsupported payment method: " + paymentMethod);
     }
 
+    private UserAddress resolveAddress(UserAccount userAccount, CheckoutRequest request) {
+        if (request.getSavedAddressId() != null) {
+            return userAddressRepository.findByIdAndUserId(request.getSavedAddressId(), userAccount.getId())
+                    .orElseThrow(() -> new IllegalArgumentException("Saved address not found"));
+        }
+
+        if (request.getShipping() == null) {
+            throw new IllegalArgumentException("shipping is required");
+        }
+
+        UserAddress address = new UserAddress();
+        address.setUser(userAccount);
+        address.setLabel(resolveAddressLabel(request));
+        address.setFullName(request.getShipping().getFullName().trim());
+        address.setEmail(request.getShipping().getEmail().trim().toLowerCase(Locale.ROOT));
+        address.setAddress(request.getShipping().getAddress().trim());
+        address.setCity(request.getShipping().getCity().trim());
+        address.setPostalCode(request.getShipping().getPostalCode().trim());
+        address.setCountry(request.getShipping().getCountry().trim());
+        address.setDefault(false);
+
+        if (request.isSaveShippingAddress()) {
+            persistAddress(userAccount.getId(), address);
+        }
+
+        return address;
+    }
+
+    private ResolvedPayment resolvePayment(UserAccount userAccount, CheckoutRequest request) {
+        if (request.getSavedPaymentMethodId() != null) {
+            UserPaymentMethod saved = userPaymentMethodRepository.findByIdAndUserId(request.getSavedPaymentMethodId(), userAccount.getId())
+                    .orElseThrow(() -> new IllegalArgumentException("Saved payment method not found"));
+            if ("card".equals(saved.getMethod())) {
+                return new ResolvedPayment("card", saved.getCardLast4(), saved.getCardExpiry(), null);
+            }
+            if ("paypal".equals(saved.getMethod())) {
+                return new ResolvedPayment("paypal", null, null, saved.getPaypalEmail());
+            }
+            throw new IllegalArgumentException("Unsupported payment method: " + saved.getMethod());
+        }
+
+        CheckoutPaymentRequest payment = request.getPayment();
+        if (payment == null) {
+            throw new IllegalArgumentException("payment is required");
+        }
+
+        String paymentMethod = normalizePaymentMethod(payment.getMethod());
+        validatePaymentByMethod(payment, paymentMethod);
+        if ("card".equals(paymentMethod)) {
+            String cardNumber = payment.getCardNumber().trim();
+            String cardLast4 = cardNumber.substring(cardNumber.length() - 4);
+            String cardExpiry = payment.getCardExpiry().trim();
+
+            if (request.isSavePaymentMethod()) {
+                UserPaymentMethod method = new UserPaymentMethod();
+                method.setUser(userAccount);
+                method.setMethod("card");
+                method.setLabel(resolvePaymentLabel(request, "Card"));
+                method.setCardLast4(cardLast4);
+                method.setCardExpiry(cardExpiry);
+                method.setPaypalEmail(null);
+                method.setDefault(false);
+                persistPaymentMethod(userAccount.getId(), method);
+            }
+
+            return new ResolvedPayment("card", cardLast4, cardExpiry, null);
+        }
+
+        String paypalEmail = payment.getPaypalEmail().trim().toLowerCase(Locale.ROOT);
+        if (request.isSavePaymentMethod()) {
+            UserPaymentMethod method = new UserPaymentMethod();
+            method.setUser(userAccount);
+            method.setMethod("paypal");
+            method.setLabel(resolvePaymentLabel(request, "PayPal"));
+            method.setPaypalEmail(paypalEmail);
+            method.setCardLast4(null);
+            method.setCardExpiry(null);
+            method.setDefault(false);
+            persistPaymentMethod(userAccount.getId(), method);
+        }
+        return new ResolvedPayment("paypal", null, null, paypalEmail);
+    }
+
+    private String resolveAddressLabel(CheckoutRequest request) {
+        if (request.getShippingAddressLabel() == null || request.getShippingAddressLabel().trim().isEmpty()) {
+            return "Saved address";
+        }
+        return request.getShippingAddressLabel().trim();
+    }
+
+    private String resolvePaymentLabel(CheckoutRequest request, String fallback) {
+        if (request.getPaymentMethodLabel() == null || request.getPaymentMethodLabel().trim().isEmpty()) {
+            return fallback;
+        }
+        return request.getPaymentMethodLabel().trim();
+    }
+
+    private void persistAddress(Long userId, UserAddress address) {
+        List<UserAddress> existing = userAddressRepository.findByUserIdOrderByCreatedAtDesc(userId);
+        if (existing.isEmpty()) {
+            address.setDefault(true);
+        }
+        userAddressRepository.save(address);
+    }
+
+    private void persistPaymentMethod(Long userId, UserPaymentMethod method) {
+        List<UserPaymentMethod> existing = userPaymentMethodRepository.findByUserIdOrderByCreatedAtDesc(userId);
+        if (existing.isEmpty()) {
+            method.setDefault(true);
+        }
+        userPaymentMethodRepository.save(method);
+    }
+
     private void requireText(String value, String message) {
         if (value == null || value.trim().isEmpty()) {
             throw new IllegalArgumentException(message);
@@ -177,5 +298,8 @@ public class CheckoutService {
     private UserAccount getUserByEmail(String email) {
         return userAccountRepository.findByEmailIgnoreCase(email)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
+    }
+
+    private record ResolvedPayment(String method, String cardLast4, String cardExpiry, String paypalEmail) {
     }
 }

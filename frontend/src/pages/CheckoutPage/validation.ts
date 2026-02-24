@@ -16,6 +16,10 @@ export interface CheckoutFormValues {
 }
 
 export type CheckoutFormErrors = Partial<Record<keyof CheckoutFormValues, string>>;
+export interface CheckoutValidationOptions {
+  requireShipping: boolean;
+  requirePayment: boolean;
+}
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const postalCodeRegex = /^[A-Za-z0-9 -]{3,12}$/;
@@ -42,24 +46,30 @@ export function formatCardCvcInput(value: string): string {
   return value.replace(/\D/g, '').slice(0, 4);
 }
 
-export function validateCheckout(values: CheckoutFormValues, paymentMethod: PaymentMethod): CheckoutFormErrors {
+export function validateCheckout(
+  values: CheckoutFormValues,
+  paymentMethod: PaymentMethod,
+  options: CheckoutValidationOptions,
+): CheckoutFormErrors {
   const errors: CheckoutFormErrors = {};
 
-  if (values.fullName.trim().length < 2) errors.fullName = 'Enter your full name.';
-  if (!emailRegex.test(values.email.trim())) errors.email = 'Enter a valid email address.';
-  if (values.address.trim().length < 5) errors.address = 'Enter a valid street address.';
-  if (values.city.trim().length < 2) errors.city = 'Enter a valid city.';
-  if (!postalCodeRegex.test(values.postalCode.trim())) errors.postalCode = 'Enter a valid postal code.';
-  if (values.country.trim().length < 2) errors.country = 'Enter a valid country.';
+  if (options.requireShipping) {
+    if (values.fullName.trim().length < 2) errors.fullName = 'Enter your full name.';
+    if (!emailRegex.test(values.email.trim())) errors.email = 'Enter a valid email address.';
+    if (values.address.trim().length < 5) errors.address = 'Enter a valid street address.';
+    if (values.city.trim().length < 2) errors.city = 'Enter a valid city.';
+    if (!postalCodeRegex.test(values.postalCode.trim())) errors.postalCode = 'Enter a valid postal code.';
+    if (values.country.trim().length < 2) errors.country = 'Enter a valid country.';
+  }
 
-  if (paymentMethod === 'card') {
+  if (options.requirePayment && paymentMethod === 'card') {
     const cardDigits = values.cardNumber.replace(/\s+/g, '');
     if (!cardNumberRegex.test(cardDigits)) errors.cardNumber = 'Card number must be 13 to 19 digits.';
     if (!cardExpiryRegex.test(values.cardExpiry.trim())) errors.cardExpiry = 'Use MM/YY format.';
     if (!cardCvcRegex.test(values.cardCvc.trim())) errors.cardCvc = 'CVC must be 3 or 4 digits.';
   }
 
-  if (paymentMethod === 'paypal' && !emailRegex.test(values.paypalEmail.trim())) {
+  if (options.requirePayment && paymentMethod === 'paypal' && !emailRegex.test(values.paypalEmail.trim())) {
     errors.paypalEmail = 'Enter a valid PayPal email address.';
   }
 

@@ -25,7 +25,7 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests((auth) -> auth
                         .requestMatchers("/api/auth/**", "/api/products/**", "/api/categories/**", "/health", "/api/status").permitAll()
-                        .requestMatchers("/api/cart/**", "/api/checkout/**", "/api/orders/**").authenticated()
+                        .requestMatchers("/api/cart/**", "/api/checkout/**", "/api/orders/**", "/api/profile/**").authenticated()
                         .anyRequest().permitAll()
                 )
                 .sessionManagement((session) -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
