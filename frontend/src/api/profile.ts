@@ -1,4 +1,5 @@
 import type { SavedAddress, SavedPaymentMethod } from '../types/profile';
+import type { AuthUser } from '../types/auth';
 
 const API_BASE = '/api/profile';
 
@@ -33,6 +34,20 @@ export interface CreatePaymentMethodPayload {
   cardExpiry?: string;
   paypalEmail?: string;
   isDefault?: boolean;
+}
+
+export interface UpdateAccountPayload {
+  name: string;
+  email: string;
+}
+
+export interface ChangePasswordPayload {
+  currentPassword: string;
+  newPassword: string;
+}
+
+export interface DeleteAccountPayload {
+  currentPassword: string;
 }
 
 export async function fetchAddresses(): Promise<SavedAddress[]> {
@@ -110,5 +125,50 @@ export async function setDefaultPaymentMethod(paymentMethodId: number): Promise<
     const message = await getErrorMessage(res, 'Failed to set default payment method');
     throw new Error(message);
   }
+  return res.json();
+}
+
+export async function updateAccount(payload: UpdateAccountPayload): Promise<AuthUser> {
+  const res = await fetch(`${API_BASE}/account`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) {
+    const message = await getErrorMessage(res, 'Failed to update account');
+    throw new Error(message);
+  }
+
+  return res.json();
+}
+
+export async function changePassword(payload: ChangePasswordPayload): Promise<{ message: string }> {
+  const res = await fetch(`${API_BASE}/account/password`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) {
+    const message = await getErrorMessage(res, 'Failed to update password');
+    throw new Error(message);
+  }
+
+  return res.json();
+}
+
+export async function deleteAccount(payload: DeleteAccountPayload): Promise<{ message: string }> {
+  const res = await fetch(`${API_BASE}/account`, {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) {
+    const message = await getErrorMessage(res, 'Failed to delete account');
+    throw new Error(message);
+  }
+
   return res.json();
 }

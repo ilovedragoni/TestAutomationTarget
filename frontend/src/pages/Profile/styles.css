@@ -49,11 +49,21 @@
   min-width: 0;
 }
 
+.profile-account-grid {
+  display: grid;
+  gap: 1rem;
+}
+
 .profile-card {
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: 10px;
   padding: 0.9rem;
+}
+
+.profile-card-danger {
+  border-color: #f3c6c6;
+  background: #fffafa;
 }
 
 .profile-card h2 {
@@ -143,6 +153,7 @@
 
 .profile-form input[type="text"],
 .profile-form input[type="email"],
+.profile-form input[type="password"],
 .profile-form select {
   padding: 0.5rem;
   width: 100%;
@@ -160,6 +171,26 @@
   display: grid;
   gap: 0.55rem;
   grid-template-columns: 1fr 1fr;
+}
+
+.profile-form-actions {
+  display: flex;
+  gap: 0.55rem;
+  justify-content: flex-end;
+}
+
+.profile-account-readonly {
+  display: grid;
+  gap: 0.55rem;
+  justify-items: start;
+}
+
+.profile-danger-text {
+  color: #8a1c1c;
+}
+
+#delete-button {
+  margin-top: 20px;
 }
 
 .profile-inline-check {

@@ -2,10 +2,15 @@ package org.testautomation.service;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.testautomation.domain.UserAddressRequest;
 import org.testautomation.domain.UserAddressResponse;
+import org.testautomation.domain.UserAccountDeleteRequest;
+import org.testautomation.domain.UserAccountUpdateRequest;
+import org.testautomation.domain.UserPasswordUpdateRequest;
 import org.testautomation.domain.UserPaymentMethodRequest;
 import org.testautomation.domain.UserPaymentMethodResponse;
+import org.testautomation.domain.AuthUserDTO;
 import org.testautomation.entity.UserAccount;
 import org.testautomation.entity.UserAddress;
 import org.testautomation.entity.UserPaymentMethod;
@@ -22,15 +27,18 @@ public class ProfileService {
     private final UserAccountRepository userAccountRepository;
     private final UserAddressRepository userAddressRepository;
     private final UserPaymentMethodRepository userPaymentMethodRepository;
+    private final PasswordEncoder passwordEncoder;
 
     public ProfileService(
             UserAccountRepository userAccountRepository,
             UserAddressRepository userAddressRepository,
-            UserPaymentMethodRepository userPaymentMethodRepository
+            UserPaymentMethodRepository userPaymentMethodRepository,
+            PasswordEncoder passwordEncoder
     ) {
         this.userAccountRepository = userAccountRepository;
         this.userAddressRepository = userAddressRepository;
         this.userPaymentMethodRepository = userPaymentMethodRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Transactional(readOnly = true)
@@ -39,6 +47,54 @@ public class ProfileService {
         return userAddressRepository.findByUserIdOrderByCreatedAtDesc(user.getId()).stream()
                 .map(this::toAddressResponse)
                 .toList();
+    }
+
+    @Transactional
+    public AuthUserDTO updateAccount(String currentEmail, UserAccountUpdateRequest request) {
+        UserAccount user = getUserByEmail(currentEmail);
+        String normalizedName = request.getName().trim();
+        String normalizedEmail = request.getEmail().trim().toLowerCase(Locale.ROOT);
+
+        if (!user.getEmail().equalsIgnoreCase(normalizedEmail)
+                && userAccountRepository.existsByEmailIgnoreCase(normalizedEmail)) {
+            throw new IllegalArgumentException("Email is already in use");
+        }
+
+        user.setDisplayName(normalizedName);
+        user.setEmail(normalizedEmail);
+        UserAccount saved = userAccountRepository.save(user);
+        return new AuthUserDTO(saved.getId(), saved.getEmail(), saved.getDisplayName());
+    }
+
+    @Transactional
+    public void updatePassword(String currentEmail, UserPasswordUpdateRequest request) {
+        UserAccount user = getUserByEmail(currentEmail);
+        String currentPassword = request.getCurrentPassword();
+        String newPassword = request.getNewPassword();
+
+        if (!passwordEncoder.matches(currentPassword, user.getPasswordHash())) {
+            throw new IllegalArgumentException("Current password is incorrect");
+        }
+
+        if (newPassword.trim().length() < 8) {
+            throw new IllegalArgumentException("New password must be at least 8 characters");
+        }
+
+        if (passwordEncoder.matches(newPassword, user.getPasswordHash())) {
+            throw new IllegalArgumentException("New password must be different from current password");
+        }
+
+        user.setPasswordHash(passwordEncoder.encode(newPassword));
+        userAccountRepository.save(user);
+    }
+
+    @Transactional
+    public void deleteAccount(String currentEmail, UserAccountDeleteRequest request) {
+        UserAccount user = getUserByEmail(currentEmail);
+        if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPasswordHash())) {
+            throw new IllegalArgumentException("Current password is incorrect");
+        }
+        userAccountRepository.delete(user);
     }
 
     @Transactional

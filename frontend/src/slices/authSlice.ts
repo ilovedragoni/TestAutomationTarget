@@ -1,4 +1,5 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
+import type { PayloadAction } from '@reduxjs/toolkit';
 import type { RootState } from '../app/store';
 import * as api from '../api/signin';
 import type { AuthUser, SignInRequest, SignInResponse } from '../types/auth';
@@ -65,6 +66,9 @@ const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
+    setAuthUser(state, action: PayloadAction<AuthUser>) {
+      state.user = action.payload;
+    },
     clearAuthFeedback(state) {
       state.error = null;
       state.message = null;
@@ -137,7 +141,7 @@ const authSlice = createSlice({
   },
 });
 
-export const { clearAuthFeedback, signOutLocal } = authSlice.actions;
+export const { setAuthUser, clearAuthFeedback, signOutLocal } = authSlice.actions;
 
 export const selectAuth = (state: RootState) => state.auth;
 
