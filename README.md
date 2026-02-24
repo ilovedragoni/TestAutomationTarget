@@ -7,6 +7,7 @@ The app includes:
 - Authentication (sign up/sign in/session restore/sign out)
 - Authenticated cart flows (server-backed)
 - Checkout flow with persisted orders
+- Profile management (orders, account details, password, addresses, payment methods, notifications, account deletion)
 
 ## Stack
 
@@ -96,7 +97,7 @@ Disabled in `test` profile.
 - `/checkout/success` One-time order confirmation screen
 - `/signin` Sign in
 - `/signup` Sign up
-- `/profile` Signed-in profile page (Orders + Account sections)
+- `/profile` Signed-in profile page (Orders, Account, Addresses, Payment Methods, Notifications)
 - `/contact` Contact page
 
 ## Current API Surface
@@ -127,6 +128,19 @@ Checkout:
 Orders:
 - `GET /api/orders` (current user order history)
 
+Profile:
+- `PATCH /api/profile/account` (update display name/email)
+- `PATCH /api/profile/account/password` (change password)
+- `DELETE /api/profile/account` (delete current user account)
+- `GET /api/profile/addresses`
+- `POST /api/profile/addresses`
+- `DELETE /api/profile/addresses/{addressId}`
+- `PATCH /api/profile/addresses/{addressId}/default`
+- `GET /api/profile/payment-methods`
+- `POST /api/profile/payment-methods`
+- `DELETE /api/profile/payment-methods/{paymentMethodId}`
+- `PATCH /api/profile/payment-methods/{paymentMethodId}/default`
+
 ## Cart Behavior
 
 The cart is server-backed and requires authentication:
@@ -135,6 +149,7 @@ The cart is server-backed and requires authentication:
 2. Cart changes are synced to backend via `PUT /api/cart`.
 3. Checkout (`POST /api/checkout`) validates cart/subtotal, creates an order, and clears the cart.
 4. Users can review order history from Profile (Orders), powered by `GET /api/orders`.
+5. Users can manage saved addresses/payment methods and account details from Profile.
 
 ## Checkout UX Notes
 

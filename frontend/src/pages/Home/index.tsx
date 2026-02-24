@@ -10,7 +10,7 @@ export default function Home() {
         <p className="home-intro">
           This application is designed for Selenium, Playwright, and API test training. It focuses on stable
           selectors, realistic user flows, and deterministic behavior that makes tests easier to maintain across auth,
-          cart, checkout, and order-history scenarios.
+          cart, checkout, profile-management, and order-history scenarios.
         </p>
         <div className="home-actions">
           <Link className="home-action primary" to="/products">
@@ -20,7 +20,7 @@ export default function Home() {
             Go to checkout flow
           </Link>
           <Link className="home-action" to="/profile">
-            Go to profile orders
+            Go to profile flows
           </Link>
         </div>
       </header>
@@ -67,6 +67,15 @@ export default function Home() {
                 <li>Profile Orders list after checkout.</li>
                 <li>Order metadata, line items, and subtotal assertions.</li>
                 <li>Refresh behavior and error handling.</li>
+              </ul>
+            </li>
+            <li>
+              Profile management
+              <ul>
+                <li>Edit account name/email with optimistic UI updates.</li>
+                <li>Change-password validation and failure handling.</li>
+                <li>Saved addresses and payment methods CRUD/default selection.</li>
+                <li>Danger-zone account deletion with explicit confirmation.</li>
               </ul>
             </li>
             <li>
