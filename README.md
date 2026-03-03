@@ -183,3 +183,4 @@ Integration flows only (`@SpringBootTest`):
 ```bash
 mvn "-Dtest=org.testautomation.integration.*IntegrationTest" test
 ```
+Test
