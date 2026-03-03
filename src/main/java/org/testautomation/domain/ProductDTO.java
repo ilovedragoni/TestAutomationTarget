@@ -1,7 +1,6 @@
 package org.testautomation.domain;
 
 import java.math.BigDecimal;
-import java.time.Instant;
 
 public class ProductDTO {
     private Long id;
