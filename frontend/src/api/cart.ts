@@ -1,4 +1,5 @@
 import type { CartItem } from '../slices/cartSlice';
+import { apiFetch } from './client';
 
 interface CartItemPayload {
   productId: number;
@@ -37,7 +38,7 @@ function toPayload(items: CartItem[]): CartItemPayload[] {
 }
 
 export async function fetchCart(): Promise<CartItem[]> {
-  const res = await fetch(API_BASE);
+  const res = await apiFetch(API_BASE);
   if (!res.ok) {
     const message = await getErrorMessage(res, 'Failed to load cart');
     throw new Error(message);
@@ -48,7 +49,7 @@ export async function fetchCart(): Promise<CartItem[]> {
 }
 
 export async function replaceCart(items: CartItem[]): Promise<CartItem[]> {
-  const res = await fetch(API_BASE, {
+  const res = await apiFetch(API_BASE, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
@@ -66,7 +67,7 @@ export async function replaceCart(items: CartItem[]): Promise<CartItem[]> {
 }
 
 export async function clearServerCart(): Promise<void> {
-  const res = await fetch(API_BASE, {
+  const res = await apiFetch(API_BASE, {
     method: 'DELETE',
   });
   if (!res.ok) {

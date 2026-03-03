@@ -1,5 +1,6 @@
 import type { SavedAddress, SavedPaymentMethod } from '../types/profile';
 import type { AuthUser } from '../types/auth';
+import { apiFetch } from './client';
 
 const API_BASE = '/api/profile';
 
@@ -51,7 +52,7 @@ export interface DeleteAccountPayload {
 }
 
 export async function fetchAddresses(): Promise<SavedAddress[]> {
-  const res = await fetch(`${API_BASE}/addresses`);
+  const res = await apiFetch(`${API_BASE}/addresses`);
   if (!res.ok) {
     const message = await getErrorMessage(res, 'Failed to load addresses');
     throw new Error(message);
@@ -60,7 +61,7 @@ export async function fetchAddresses(): Promise<SavedAddress[]> {
 }
 
 export async function createAddress(payload: CreateAddressPayload): Promise<SavedAddress> {
-  const res = await fetch(`${API_BASE}/addresses`, {
+  const res = await apiFetch(`${API_BASE}/addresses`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
@@ -73,7 +74,7 @@ export async function createAddress(payload: CreateAddressPayload): Promise<Save
 }
 
 export async function deleteAddress(addressId: number): Promise<void> {
-  const res = await fetch(`${API_BASE}/addresses/${addressId}`, { method: 'DELETE' });
+  const res = await apiFetch(`${API_BASE}/addresses/${addressId}`, { method: 'DELETE' });
   if (!res.ok) {
     const message = await getErrorMessage(res, 'Failed to delete address');
     throw new Error(message);
@@ -81,7 +82,7 @@ export async function deleteAddress(addressId: number): Promise<void> {
 }
 
 export async function setDefaultAddress(addressId: number): Promise<SavedAddress> {
-  const res = await fetch(`${API_BASE}/addresses/${addressId}/default`, { method: 'PATCH' });
+  const res = await apiFetch(`${API_BASE}/addresses/${addressId}/default`, { method: 'PATCH' });
   if (!res.ok) {
     const message = await getErrorMessage(res, 'Failed to set default address');
     throw new Error(message);
@@ -90,7 +91,7 @@ export async function setDefaultAddress(addressId: number): Promise<SavedAddress
 }
 
 export async function fetchPaymentMethods(): Promise<SavedPaymentMethod[]> {
-  const res = await fetch(`${API_BASE}/payment-methods`);
+  const res = await apiFetch(`${API_BASE}/payment-methods`);
   if (!res.ok) {
     const message = await getErrorMessage(res, 'Failed to load payment methods');
     throw new Error(message);
@@ -99,7 +100,7 @@ export async function fetchPaymentMethods(): Promise<SavedPaymentMethod[]> {
 }
 
 export async function createPaymentMethod(payload: CreatePaymentMethodPayload): Promise<SavedPaymentMethod> {
-  const res = await fetch(`${API_BASE}/payment-methods`, {
+  const res = await apiFetch(`${API_BASE}/payment-methods`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
@@ -112,7 +113,7 @@ export async function createPaymentMethod(payload: CreatePaymentMethodPayload): 
 }
 
 export async function deletePaymentMethod(paymentMethodId: number): Promise<void> {
-  const res = await fetch(`${API_BASE}/payment-methods/${paymentMethodId}`, { method: 'DELETE' });
+  const res = await apiFetch(`${API_BASE}/payment-methods/${paymentMethodId}`, { method: 'DELETE' });
   if (!res.ok) {
     const message = await getErrorMessage(res, 'Failed to delete payment method');
     throw new Error(message);
@@ -120,7 +121,7 @@ export async function deletePaymentMethod(paymentMethodId: number): Promise<void
 }
 
 export async function setDefaultPaymentMethod(paymentMethodId: number): Promise<SavedPaymentMethod> {
-  const res = await fetch(`${API_BASE}/payment-methods/${paymentMethodId}/default`, { method: 'PATCH' });
+  const res = await apiFetch(`${API_BASE}/payment-methods/${paymentMethodId}/default`, { method: 'PATCH' });
   if (!res.ok) {
     const message = await getErrorMessage(res, 'Failed to set default payment method');
     throw new Error(message);
@@ -129,7 +130,7 @@ export async function setDefaultPaymentMethod(paymentMethodId: number): Promise<
 }
 
 export async function updateAccount(payload: UpdateAccountPayload): Promise<AuthUser> {
-  const res = await fetch(`${API_BASE}/account`, {
+  const res = await apiFetch(`${API_BASE}/account`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
@@ -144,7 +145,7 @@ export async function updateAccount(payload: UpdateAccountPayload): Promise<Auth
 }
 
 export async function changePassword(payload: ChangePasswordPayload): Promise<{ message: string }> {
-  const res = await fetch(`${API_BASE}/account/password`, {
+  const res = await apiFetch(`${API_BASE}/account/password`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
@@ -159,7 +160,7 @@ export async function changePassword(payload: ChangePasswordPayload): Promise<{ 
 }
 
 export async function deleteAccount(payload: DeleteAccountPayload): Promise<{ message: string }> {
-  const res = await fetch(`${API_BASE}/account`, {
+  const res = await apiFetch(`${API_BASE}/account`, {
     method: 'DELETE',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),

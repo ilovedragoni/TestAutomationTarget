@@ -1,4 +1,5 @@
 import type { SignUpRequest, SignUpResponse } from '../types/auth';
+import { apiFetch } from './client';
 
 const API_BASE = '/api/auth';
 
@@ -16,7 +17,7 @@ async function getErrorMessage(res: Response, fallback: string): Promise<string>
 }
 
 export async function signUp(payload: SignUpRequest): Promise<SignUpResponse> {
-  const res = await fetch(`${API_BASE}/signup`, {
+  const res = await apiFetch(`${API_BASE}/signup`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

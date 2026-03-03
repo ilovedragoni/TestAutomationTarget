@@ -1,4 +1,5 @@
 import type { CheckoutRequest, CheckoutResponse } from '../types/checkout';
+import { apiFetch } from './client';
 
 const API_BASE = '/api/checkout';
 
@@ -24,7 +25,7 @@ function buildMockResponse(): CheckoutResponse {
 }
 
 export async function submitCheckout(payload: CheckoutRequest): Promise<CheckoutResponse> {
-  const res = await fetch(API_BASE, {
+  const res = await apiFetch(API_BASE, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

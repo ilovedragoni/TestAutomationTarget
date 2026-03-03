@@ -1,4 +1,5 @@
 import type { SignInRequest, SignInResponse } from '../types/auth';
+import { apiFetch } from './client';
 
 const API_BASE = '/api/auth';
 
@@ -16,7 +17,7 @@ async function getErrorMessage(res: Response, fallback: string): Promise<string>
 }
 
 export async function signIn(payload: SignInRequest): Promise<SignInResponse> {
-  const res = await fetch(`${API_BASE}/signin`, {
+  const res = await apiFetch(`${API_BASE}/signin`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -33,7 +34,7 @@ export async function signIn(payload: SignInRequest): Promise<SignInResponse> {
 }
 
 export async function fetchSession(): Promise<SignInResponse> {
-  const res = await fetch(`${API_BASE}/me`);
+  const res = await apiFetch(`${API_BASE}/me`);
   if (!res.ok) {
     const message = await getErrorMessage(res, 'Not authenticated');
     throw new Error(message);
@@ -43,7 +44,7 @@ export async function fetchSession(): Promise<SignInResponse> {
 }
 
 export async function logout(): Promise<void> {
-  const res = await fetch(`${API_BASE}/logout`, {
+  const res = await apiFetch(`${API_BASE}/logout`, {
     method: 'POST',
   });
 

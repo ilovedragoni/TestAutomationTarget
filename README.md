@@ -1,6 +1,6 @@
 # TestAutomationTarget
 
-A Spring Boot + React application built as a practical target for UI/API test automation.
+A Spring Boot API and React frontend built as a practical target for UI/API test automation.
 
 The app includes:
 - Product/catalog browsing
@@ -18,25 +18,7 @@ The app includes:
 
 ## Quick Start
 
-### Option A: Backend serves built frontend
-
-```bash
-cd frontend && npm install && npm run build && cd ..
-mvn spring-boot:run
-```
-
-Or package and run:
-
-```bash
-mvn package
-java -jar target/TestAutomationTarget-1.0-SNAPSHOT.jar
-```
-
-- Web UI: http://localhost:8080/
-- Health: http://localhost:8080/health
-- API status: http://localhost:8080/api/status
-
-### Option B: Frontend dev server + backend
+### Run Backend and Frontend Separately
 
 ```bash
 # Terminal 1
@@ -48,8 +30,7 @@ cd frontend && npm install && npm run dev
 
 - React app: http://localhost:3000
 - Backend: http://localhost:8080
-
-Vite proxies `/api` and `/health` to backend (see `frontend/vite.config.js`).
+- Frontend API base URL: `VITE_API_BASE_URL` (defaults to `http://localhost:8080`)
 
 ## Database
 
@@ -100,6 +81,16 @@ Disabled in `test` profile.
 - `/signup` Sign up
 - `/profile` Signed-in profile page (Orders, Account, Addresses, Payment Methods, Notifications)
 - `/contact` Contact page
+
+## Frontend Configuration
+
+Create `frontend/.env.local` if you need a different backend URL:
+
+```bash
+VITE_API_BASE_URL=http://localhost:8080
+```
+
+The frontend sends cookies with API requests, so backend CORS must allow the frontend origin.
 
 ## Current API Surface
 
@@ -157,6 +148,12 @@ The cart is server-backed and requires authentication:
 - Successful checkout redirects to `/checkout/success`.
 - The confirmation screen is intended as a one-time post-checkout view and relies on navigation state from the checkout flow.
 
+## Deployment Notes
+
+- Backend is API-only and no longer builds or serves the frontend.
+- Frontend and backend should be deployed independently.
+- Configure backend CORS allowed origins in [application.yml](c:/Users/ilove/OneDrive/Documents/Kodeprosjekter/Target/TestAutomationTarget/src/main/resources/application.yml).
+
 ## Testing Notes
 
 The UI keeps stable selectors (`id` and `data-testid`) for automation.
@@ -172,17 +169,17 @@ Examples:
 Run all backend tests:
 
 ```bash
-mvn "-Dskip.frontend=true" test
+mvn test
 ```
 
 Controller slice tests only (`@WebMvcTest`):
 
 ```bash
-mvn "-Dtest=org.testautomation.controller.*WebMvcTest" "-Dskip.frontend=true" test
+mvn "-Dtest=org.testautomation.controller.*WebMvcTest" test
 ```
 
 Integration flows only (`@SpringBootTest`):
 
 ```bash
-mvn "-Dtest=org.testautomation.integration.*IntegrationTest" "-Dskip.frontend=true" test
+mvn "-Dtest=org.testautomation.integration.*IntegrationTest" test
 ```

@@ -1,4 +1,5 @@
 import type { Product, ProductPage } from "../types/product";
+import { apiFetch } from './client';
 
 const API_BASE = '/api/products';
 
@@ -22,7 +23,7 @@ export async function fetchProducts(
 
   const qs = params.toString();
   const url = qs ? `${API_BASE}?${qs}` : `${API_BASE}`;
-  const res = await fetch(url);
+  const res = await apiFetch(url);
   if (!res.ok) {
     throw new Error('Failed to fetch products');
   }
@@ -31,7 +32,7 @@ export async function fetchProducts(
 }
 
 export async function fetchProduct(id: number): Promise<Product> {
-  const res = await fetch(`${API_BASE}/${id}`);
+  const res = await apiFetch(`${API_BASE}/${id}`);
   if (!res.ok) {
     throw new Error('Failed to fetch product');
   }

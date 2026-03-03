@@ -1,4 +1,5 @@
 import type { OrderSummary } from '../types/order';
+import { apiFetch } from './client';
 
 const API_BASE = '/api/orders';
 
@@ -16,7 +17,7 @@ async function getErrorMessage(res: Response, fallback: string): Promise<string>
 }
 
 export async function fetchOrders(): Promise<OrderSummary[]> {
-  const res = await fetch(API_BASE);
+  const res = await apiFetch(API_BASE);
   if (!res.ok) {
     const message = await getErrorMessage(res, 'Failed to load orders');
     throw new Error(message);
